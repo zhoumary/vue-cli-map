@@ -22,3 +22,11 @@ npm run lint
 
 ### Customize configuration
 See [Configuration Reference](https://cli.vuejs.org/config/).
+
+
+## Vue && Vue Router && Vue AMap
+```
+1. use vue-router to create navigation
+2. use vue-amap to create map and search places
+
+```
