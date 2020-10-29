@@ -18,6 +18,8 @@
 </template>
 
 <script>
+import { mapState } from 'vuex'
+
 export default {
   name: 'HelloWorld',
   props: {
@@ -25,13 +27,28 @@ export default {
   },
   data: function() {
     return {
-      city: ""
+      city: "",
+      geolocation: ""
     }
+  },
+  computed: {
+    ...mapState({
+      geoLocation: state => state.geolocation.geolocation
+    })
   },
   methods: {
     search: function() {
+      // from city to get geolocation
+      const toPath = "/search/" + this.city + "/geolocation/";
+      const payload = {
+        "placeName": this.city,
+        "router": this.$router,
+        "topath": toPath
+      };
+      this.$store.dispatch('geolocation/getGeolocation', payload);
+
       // navigation
-      this.$router.push('/search/' + this.city);
+      // this.$router.push('/search/' + this.city + '/geolocation/' + '104.065850,30.657361');
     }
   }
 }

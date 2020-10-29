@@ -51,6 +51,7 @@ export default {
   data: function() {
     return {
       city: this.$route.params.city || "",
+      geolocation: this.$route.params.geolocation,
       screenWidth: document.body.clientWidth,
       markers: [],
       searchOption: {
@@ -58,7 +59,7 @@ export default {
         citylimit: true,
         
       },
-      mapCenter: [121.59996, 31.197646]
+      mapCenter: [this.$route.params.location.substring(0,this.$route.params.location.indexOf(",")), this.$route.params.location.substring(this.$route.params.location.indexOf(",") + 1)]
     }
   },
   mounted: function() {
