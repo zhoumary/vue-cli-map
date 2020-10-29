@@ -28,5 +28,7 @@ See [Configuration Reference](https://cli.vuejs.org/config/).
 ```
 1. use vue-router to create navigation
 2. use vue-amap to create map and search places
+3. use vuex to manage state and actions
+4. use vue-axios to manage apis
 
 ```
