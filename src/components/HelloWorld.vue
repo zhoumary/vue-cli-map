@@ -46,9 +46,6 @@ export default {
         "topath": toPath
       };
       this.$store.dispatch('geolocation/getGeolocation', payload);
-
-      // navigation
-      // this.$router.push('/search/' + this.city + '/geolocation/' + '104.065850,30.657361');
     }
   }
 }

@@ -6,7 +6,11 @@ const state = () => ({
 })
   
   // getters
-  const getters = {}
+  const getters = {
+      geoLocaton: (state) => {
+          return state.geolocation;
+      }
+  }
   
   // actions
   const actions = {
@@ -23,7 +27,7 @@ const state = () => ({
   const mutations = {
     setGeolocation (state, {geolocation, router, topath}) {
       state.geolocation = geolocation
-      if (geolocation) {
+      if (geolocation && router) {
         router.push(topath + geolocation);
       }
     }
