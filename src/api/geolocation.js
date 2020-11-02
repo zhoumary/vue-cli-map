@@ -6,7 +6,7 @@ Vue.use(VueAxios, axios)
 
 export default {
     getGeolocation (placeName, cb, errorCb) {
-        const getGeoLocationUrl = "https://restapi.amap.com/v3/geocode/geo?address=" + placeName + "&key=" + "your web key";
+        const getGeoLocationUrl = "https://restapi.amap.com/v3/geocode/geo?address=" + placeName + "&key=" + "29b3305fe75feb8d14d4190c932ba7c9";
 
         Vue.axios.get(getGeoLocationUrl, )
             .then((response) => {

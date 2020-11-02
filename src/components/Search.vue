@@ -17,7 +17,20 @@
         <el-col class="amap-wrapper" id="searchMap" :span="16">
             <el-amap-search-box class="search-box" v-model="searchText" :search-option="searchOption" :on-search-result="onSearchResult"></el-amap-search-box>
             <el-amap vid="amapDemo" :center="mapCenter" :zoom="12" class="amap-demo">
-                <el-amap-marker v-for="(marker, index) in markers" :position="marker" :key="index"></el-amap-marker>
+                <el-amap-marker 
+                  v-for="(marker, index) in markers" 
+                  :events="marker.events"  
+                  :position="marker.position"
+                  :visible="marker.visible"
+                  :draggable="marker.draggable"
+                  :key="index">
+                </el-amap-marker>
+                <el-amap-info-window
+                  :position="currentWindow.position"
+                  :content="currentWindow.content"
+                  :visible="currentWindow.visible"
+                  :events="currentWindow.events">
+                </el-amap-info-window>
             </el-amap>
         </el-col>
     </el-row>
@@ -38,17 +51,6 @@ export default {
       '$route' (to) {
         this.city = to.params.city || "";
       },
-      screenWidth (val) {
-        this.screenWidth = val;
-        const searchMap = document.getElementById("searchMap");
-        const appHeight = parseInt(window.innerHeight);
-        const headerHeight = parseInt(document.getElementsByClassName("hello")[0].clientHeight);
-        const searchHeight = parseInt(document.getElementsByClassName("search")[0].clientHeight);
-        searchMap.style.height = (appHeight - 16 - headerHeight - 40 - searchHeight).toString() + "px";
-      },
-      mapCenterGetter (val) {
-        console.log("mapCenterGetter", val);
-      }
   },
   computed: {
     ...mapState({
@@ -59,7 +61,7 @@ export default {
     }),
     mapCenterGetter() {
       return this.$store.getters["geolocation/geoLocaton"] ? [this.$store.getters["geolocation/geoLocaton"].substring(0,this.$store.getters["geolocation/geoLocaton"].indexOf(",")), this.$store.getters["geolocation/geoLocaton"].substring(this.$store.getters["geolocation/geoLocaton"].indexOf(",") + 1)] : ["", ""];
-    }
+    },
   },
   data: function() {
     return {
@@ -68,6 +70,12 @@ export default {
       geolocation: this.$route.params.location,
       screenWidth: document.body.clientWidth,
       markers: [],
+      currentWindow: {
+        position: [0, 0],
+        content: '',
+        events: {},
+        visible: false
+      },
       searchOption: {
         city: this.$route.params.city,
         citylimit: true,
@@ -109,21 +117,53 @@ export default {
       let lat = 31.197646 + Math.round(Math.random() * 500) / 10000;
       this.markers.push([lng, lat]);
     },
-    onSearchResult(pois) {
+    onSearchResult: function(pois) {
+      console.log(pois);
       let latSum = 0;
       let lngSum = 0;
+      let that = this;
       if (pois.length > 0) {
-        pois.forEach(poi => {
+        if (that.currentWindow.position[0] + that.currentWindow.position[1] === 0 && this.currentWindow.content === "") {
+          that.currentWindow = {
+            position: [pois[0].lng, pois[0].lat],
+            content: pois[0].name,
+            events: {},
+            visible: true
+          }
+        }
+
+        pois.forEach((poi, index) => {
+            let oneMarker = {};
             let {lng, lat} = poi;
             lngSum += lng;
             latSum += lat;
-            this.markers.push([poi.lng, poi.lat]);
+            oneMarker.position = [lng, lat];
+            oneMarker.visible = true;
+            oneMarker.draggable = false;
+
+            oneMarker.events = {
+              click: (e) => {
+                that.currentWindow.visible = false;
+                that.$nextTick(() => {
+                  that.currentWindow = {
+                    position: [e.lnglat.lng, e.lnglat.lat],
+                    content: pois[index].name,
+                    events: {}
+                  };
+                  that.currentWindow.visible = true;
+                });
+              }
+            };
+
+            that.markers.push(oneMarker);
         });
+
         let center = {
             lng: lngSum / pois.length,
             lat: latSum / pois.length
         };
         this.mapCenter = [center.lng, center.lat];
+        console.log(this.markers);
       }
     }
   }

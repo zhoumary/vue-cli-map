@@ -12,6 +12,9 @@
 <script>
 export default {
   name: 'app',
+  components: {
+    
+  },
   watch: {
       '$route' () {
           const appContainer = document.getElementById("app");
@@ -28,14 +31,26 @@ export default {
 
     }
   },
-  components: {
-    
+  created() {
+    window.addEventListener("resize", this.resizeHandler);
+  },
+  destroyed() {
+    window.removeEventListener("resize", this.resizeHandler);
   },
   mounted: function() {
     const appContainer = document.getElementById("app");
     const height = parseInt(window.innerHeight / 3, 10).toString();
     if (this.$router.currentRoute.fullPath === "/") {
       appContainer.style.marginTop = height + "px";
+    }
+  },
+  methods: {
+    resizeHandler: function() {
+      const searchMap = document.getElementById("searchMap");
+      const appHeight = parseInt(window.innerHeight);
+      const headerHeight = parseInt(document.getElementsByClassName("hello")[0].clientHeight);
+      const searchHeight = parseInt(document.getElementsByClassName("search")[0].clientHeight);
+      searchMap.style.height = (appHeight - 16 - headerHeight - 40 - searchHeight - 40).toString() + "px";
     }
   }
 }

@@ -26,8 +26,19 @@ Vue.use(VueAxios, axios)
 
 Vue.use(VueAMap);
 VueAMap.initAMapApiLoader({
-  key: 'your web js api key',
-  plugin: ['AMap.Autocomplete', 'AMap.PlaceSearch', 'AMap.Scale', 'AMap.OverView', 'AMap.ToolBar', 'AMap.MapType', 'AMap.PolyEditor', 'AMap.CircleEditor'],
+  key: '411e5b31c281c0c5d09266a3ea2b7983',
+  plugin: [
+    'AMap.Autocomplete', 
+    'AMap.PlaceSearch', 
+    'AMap.Scale', 
+    'AMap.OverView', 
+    'AMap.ToolBar', 
+    'AMap.MapType', 
+    'AMap.PolyEditor', 
+    'AMap.CircleEditor', 
+    'AMap.InfoWindow',
+    'AMap.Driving'
+  ],
   // 默认高德 sdk 版本为 1.4.4
   v: '1.4.4'
 });
