@@ -48,10 +48,18 @@
             :selectedData="getSelectedPoints" />
         </el-col>
     </el-row>
+    <el-row class="amap-page-container">
+      <el-col class="amap-wrapper" :span="12">
+        <el-amap vid="amapDriving" :plugin="plugin" :center="mapCenter" class="amap-demo">
+        </el-amap>
+      </el-col>
+    </el-row>
   </div>
 </template>
 
 <script>
+// NPM 方式
+import { AMapManager } from 'vue-amap';
 import { mapState, mapGetters } from 'vuex'
 import MultipleSelectionTable from './table/multiSelectTable'
 
@@ -112,7 +120,13 @@ export default {
         citylimit: true,
       },
       currMapCenter: this.mapCenterGetter,
-      mapCenter: [this.$route.params.location.substring(0,this.$route.params.location.indexOf(",")), this.$route.params.location.substring(this.$route.params.location.indexOf(",") + 1)]
+      mapCenter: [this.$route.params.location.substring(0,this.$route.params.location.indexOf(",")), this.$route.params.location.substring(this.$route.params.location.indexOf(",") + 1)],
+      amapManager: AMapManager,
+      events: {
+        init() {
+          
+        }
+      }
     }
   },
   mounted: function() {

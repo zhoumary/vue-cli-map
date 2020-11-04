@@ -26,7 +26,7 @@ Vue.use(VueAxios, axios)
 
 Vue.use(VueAMap);
 VueAMap.initAMapApiLoader({
-  key: 'your web js key',
+  key: '411e5b31c281c0c5d09266a3ea2b7983',
   plugin: [
     'AMap.Autocomplete', 
     'AMap.PlaceSearch', 
