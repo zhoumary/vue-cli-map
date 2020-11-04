@@ -14,7 +14,7 @@
     </el-row>
     <p v-show="currGeolocation">{{currGeolocation}}</p>
     <el-row class="amap-page-container">
-        <el-col class="amap-wrapper" id="searchMap" :span="16">
+        <el-col class="amap-wrapper" id="searchMap" :span="12">
             <el-amap-search-box class="search-box" v-model="searchText" :search-option="searchOption" :on-search-result="onSearchResult"></el-amap-search-box>
             <el-amap vid="amapDemo" :center="mapCenter" :zoom="12" class="amap-demo">
                 <el-amap-marker 
@@ -25,13 +25,27 @@
                   :draggable="marker.draggable"
                   :key="index">
                 </el-amap-marker>
+                <el-amap-text
+                  v-for="marker in markers" 
+                  :key="marker.id"
+                  :text="marker.num" 
+                  :offset=[-0.8,-20] 
+                  :position="marker.position" 
+                  :events="textsEvents">
+                </el-amap-text>
                 <el-amap-info-window
                   :position="currentWindow.position"
                   :content="currentWindow.content"
-                  :visible="currentWindow.visible"
-                  :events="currentWindow.events">
+                  :visible="currentWindow.visible">
                 </el-amap-info-window>
             </el-amap>
+        </el-col>
+        <el-col :span="6" v-if="poisCont">
+          <MultipleSelectionTable 
+            id="results"
+            :tableData="resultsTableData" 
+            :columns="resultsTableCols"
+            :selectedData="getSelectedPoints" />
         </el-col>
     </el-row>
   </div>
@@ -39,10 +53,13 @@
 
 <script>
 import { mapState, mapGetters } from 'vuex'
-// import Vue from 'vue'
+import MultipleSelectionTable from './table/multiSelectTable'
 
 export default {
   name: 'Search',
+  components: {
+    MultipleSelectionTable
+  },
   props: {
     msg: String,
     cityName: String
@@ -59,9 +76,15 @@ export default {
     ...mapGetters('geolocation', {
       currGeolocation: 'geoLocaton'
     }),
-    mapCenterGetter() {
-      return this.$store.getters["geolocation/geoLocaton"] ? [this.$store.getters["geolocation/geoLocaton"].substring(0,this.$store.getters["geolocation/geoLocaton"].indexOf(",")), this.$store.getters["geolocation/geoLocaton"].substring(this.$store.getters["geolocation/geoLocaton"].indexOf(",") + 1)] : ["", ""];
+    mapCenterGetter: {
+      get: function () {
+        return this.$store.getters["geolocation/geoLocaton"] ? [this.$store.getters["geolocation/geoLocaton"].substring(0,this.$store.getters["geolocation/geoLocaton"].indexOf(",")), this.$store.getters["geolocation/geoLocaton"].substring(this.$store.getters["geolocation/geoLocaton"].indexOf(",") + 1)] : ["", ""];
+      },
+      set: function (v) {
+        this.currMapCenter = v
+      }
     },
+
   },
   data: function() {
     return {
@@ -69,17 +92,26 @@ export default {
       searchText: "",
       geolocation: this.$route.params.location,
       screenWidth: document.body.clientWidth,
+      poisCont: 0,
+      currPois: [],
       markers: [],
+      resultsTableData: [],
+      resultsTableCols: [],
+      selectedData: [],
       currentWindow: {
+        id: '',
+        num: 0,
         position: [0, 0],
         content: '',
-        events: {},
         visible: false
       },
+      infoWindows: [],
+      textsEvents: {},
       searchOption: {
         city: this.$route.params.city,
         citylimit: true,
       },
+      currMapCenter: this.mapCenterGetter,
       mapCenter: [this.$route.params.location.substring(0,this.$route.params.location.indexOf(",")), this.$route.params.location.substring(this.$route.params.location.indexOf(",") + 1)]
     }
   },
@@ -97,10 +129,51 @@ export default {
       "topath": ''
     };
     this.$store.dispatch('geolocation/getGeolocation', payload);
+
+    // set mapCenter to currMapCenter
+    this.currMapCenter = this.mapCenter;
+
+    // set resultTableCols
+    this.resultsTableCols = [
+      {
+        "id": '1',
+        "label": '',
+        "prop": '',
+        "type": 'index',
+        "formatter": null
+      },
+      {
+        "id": '2',
+        "label": '搜索结果',
+        "prop": '',
+        "type": '',
+        "formatter": (row) => {return row.content;}
+      }
+    ];
+
+    // set textsEvents style
+    this.textsEvents = {
+      init(o) {
+        o.setStyle({
+          background: '#fff0',
+          border: '0px',
+          padding: '30px 15px',
+          fontSize: 'small',
+          fontWeight: 600
+        });
+      }
+    };
   },
   updated: function () {
-    this.mapCenter = this.mapCenterGetter;
+    this.mapCenter = this.currMapCenter[0] + this.currMapCenter[1] === this.mapCenterGetter[0] + this.mapCenterGetter[1] ? this.currMapCenter : this.mapCenterGetter;
     this.searchOption.city = this.city;
+
+    // according to results table height to change map height
+    const resultDom = document.getElementById("results");
+    const searchMap = document.getElementById("searchMap");
+    if (resultDom && searchMap) {
+      searchMap.style.height = resultDom.style.height;
+    }
   },
   methods: {
     search: function() {
@@ -112,59 +185,95 @@ export default {
       };
       this.$store.dispatch('geolocation/getGeolocation', payload);
     },
-    addMarker: function() {
-      let lng = 121.5 + Math.round(Math.random() * 1000) / 10000;
-      let lat = 31.197646 + Math.round(Math.random() * 500) / 10000;
-      this.markers.push([lng, lat]);
-    },
     onSearchResult: function(pois) {
-      console.log(pois);
       let latSum = 0;
       let lngSum = 0;
-      let that = this;
       if (pois.length > 0) {
-        if (that.currentWindow.position[0] + that.currentWindow.position[1] === 0 && this.currentWindow.content === "") {
-          that.currentWindow = {
+        let that = this;
+        const isPoisEqual = pois.every((val, index) => {
+          return (val === that.currPois[index]);
+        });
+        if (!isPoisEqual) {
+          this.poisCont = 0;
+          this.markers.length = 0;
+          this.currPois.length = 0;
+          this.currPois = pois;
+          this.resultsTableData.length = 0;
+          this.infoWindows.length = 0;
+          this.currentWindow = {
+            id: '',
+            num: 0,
+            position: [0, 0],
+            content: '',
+            visible: false
+          };
+          this.mapCenter = [0, 0];
+        }
+
+        if (this.currentWindow.position[0] + this.currentWindow.position[1] === 0 && this.currentWindow.content === "") {
+          this.currentWindow = {
             position: [pois[0].lng, pois[0].lat],
             content: pois[0].name,
-            events: {},
-            visible: true
+            visible: true,
+            id: pois[0].id,
+            num: 0
           }
         }
 
         pois.forEach((poi, index) => {
             let oneMarker = {};
-            let {lng, lat} = poi;
+            let oneInfoWindow = {};
+            let oneResultData = {};
+            let {lng, lat, id, name, address, type} = poi;
             lngSum += lng;
             latSum += lat;
+            oneMarker.num = (index + 1).toString();
             oneMarker.position = [lng, lat];
+            oneMarker.id = id;
             oneMarker.visible = true;
             oneMarker.draggable = false;
 
+            oneInfoWindow.visible = false;
+            oneInfoWindow.position = [lng, lat];
+            oneInfoWindow.id = id;
+            oneInfoWindow.num = index;
+            oneInfoWindow.content = name;
+
+            oneResultData.id = id;
+            oneResultData.num = index + 1;
+            oneResultData.content = name + '\n' + address + '\n' + type;
+
             oneMarker.events = {
-              click: (e) => {
+              click: () => {
                 that.currentWindow.visible = false;
+                that.currentWindow = that.infoWindows[index];
+                // that.currentWindow = {
+                //   position: [e.lnglat.lng, e.lnglat.lat],
+                //   content: pois[index].name
+                // };
                 that.$nextTick(() => {
-                  that.currentWindow = {
-                    position: [e.lnglat.lng, e.lnglat.lat],
-                    content: pois[index].name,
-                    events: {}
-                  };
                   that.currentWindow.visible = true;
                 });
               }
             };
 
             that.markers.push(oneMarker);
+            that.infoWindows.push(oneInfoWindow);
+            that.resultsTableData.push(oneResultData);
         });
 
         let center = {
             lng: lngSum / pois.length,
             lat: latSum / pois.length
         };
+        this.poisCont = this.markers.length;
+        this.mapCenterGetter = [0, 0];
         this.mapCenter = [center.lng, center.lat];
-        console.log(this.markers);
       }
+    },
+    // accept the selected result
+    getSelectedPoints: function(selected) {
+      this.selectedData = selected;
     }
   }
 }

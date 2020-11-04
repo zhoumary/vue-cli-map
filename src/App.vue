@@ -50,7 +50,7 @@ export default {
       const appHeight = parseInt(window.innerHeight);
       const headerHeight = parseInt(document.getElementsByClassName("hello")[0].clientHeight);
       const searchHeight = parseInt(document.getElementsByClassName("search")[0].clientHeight);
-      searchMap.style.height = (appHeight - 16 - headerHeight - 40 - searchHeight - 40).toString() + "px";
+      searchMap ? searchMap.style.height = (appHeight - 16 - headerHeight - 40 - searchHeight - 40).toString() + "px" : null;
     }
   }
 }

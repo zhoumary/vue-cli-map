@@ -37,6 +37,7 @@ VueAMap.initAMapApiLoader({
     'AMap.PolyEditor', 
     'AMap.CircleEditor', 
     'AMap.InfoWindow',
+    'AMap.Text',
     'AMap.Driving'
   ],
   // 默认高德 sdk 版本为 1.4.4
