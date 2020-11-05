@@ -13,44 +13,46 @@
 export default {
   name: 'app',
   components: {
-    
+
   },
   watch: {
-      '$route' () {
-          const appContainer = document.getElementById("app");
-          if (this.$router.currentRoute.fullPath !== "/") {
-            appContainer.style.marginTop = "0px";
-          } else {
-            const height = parseInt(window.innerHeight / 3, 10).toString();
-            appContainer.style.marginTop = height + "px";
-          }
+    '$route' () {
+      const appContainer = document.getElementById('app')
+      if (this.$router.currentRoute.fullPath !== '/') {
+        appContainer.style.marginTop = '0px'
+      } else {
+        const height = parseInt(window.innerHeight / 3, 10).toString()
+        appContainer.style.marginTop = height + 'px'
       }
+    }
   },
-  data: function() {
+  data: function () {
     return {
 
     }
   },
-  created() {
-    window.addEventListener("resize", this.resizeHandler);
+  created () {
+    window.addEventListener('resize', this.resizeHandler)
   },
-  destroyed() {
-    window.removeEventListener("resize", this.resizeHandler);
+  destroyed () {
+    window.removeEventListener('resize', this.resizeHandler)
   },
-  mounted: function() {
-    const appContainer = document.getElementById("app");
-    const height = parseInt(window.innerHeight / 3, 10).toString();
-    if (this.$router.currentRoute.fullPath === "/") {
-      appContainer.style.marginTop = height + "px";
+  mounted: function () {
+    const appContainer = document.getElementById('app')
+    const height = parseInt(window.innerHeight / 3, 10).toString()
+    if (this.$router.currentRoute.fullPath === '/') {
+      appContainer.style.marginTop = height + 'px'
     }
   },
   methods: {
-    resizeHandler: function() {
-      const searchMap = document.getElementById("searchMap");
-      const appHeight = parseInt(window.innerHeight);
-      const headerHeight = parseInt(document.getElementsByClassName("hello")[0].clientHeight);
-      const searchHeight = parseInt(document.getElementsByClassName("search")[0].clientHeight);
-      searchMap ? searchMap.style.height = (appHeight - 16 - headerHeight - 40 - searchHeight - 40).toString() + "px" : null;
+    resizeHandler: function () {
+      const searchMap = document.getElementById('searchMap')
+      const appHeight = parseInt(window.innerHeight)
+      const headerHeight = parseInt(document.getElementsByClassName('hello')[0].clientHeight)
+      const searchHeight = parseInt(document.getElementsByClassName('search')[0].clientHeight)
+      if (searchMap) {
+        searchMap.style.height = (appHeight - 16 - headerHeight - 40 - searchHeight - 40).toString() + 'px'
+      }
     }
   }
 }

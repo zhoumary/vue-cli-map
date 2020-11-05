@@ -25,10 +25,10 @@ export default {
   props: {
     msg: String
   },
-  data: function() {
+  data: function () {
     return {
-      city: "",
-      geolocation: ""
+      city: '',
+      geolocation: ''
     }
   },
   computed: {
@@ -37,15 +37,15 @@ export default {
     })
   },
   methods: {
-    search: function() {
+    search: function () {
       // from city to get geolocation
-      const toPath = "/search/" + this.city + "/geolocation/";
+      const toPath = '/search/' + this.city + '/geolocation/'
       const payload = {
-        "placeName": this.city,
-        "router": this.$router,
-        "topath": toPath
-      };
-      this.$store.dispatch('geolocation/getGeolocation', payload);
+        placeName: this.city,
+        router: this.$router,
+        topath: toPath
+      }
+      this.$store.dispatch('geolocation/getGeolocation', payload)
     }
   }
 }

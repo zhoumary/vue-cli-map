@@ -8,8 +8,11 @@
           clearable>
         </el-input>
       </el-col>
-      <el-col :span="4">
+      <el-col :span="2">
         <el-button size="medium" type="primary" @click="search">Search</el-button>
+      </el-col>
+      <el-col :span="2" id="planning" v-if="selectedCont">
+        <el-button size="medium" type="info" @click="plan">Planning</el-button>
       </el-col>
     </el-row>
     <p v-show="currGeolocation">{{currGeolocation}}</p>
@@ -17,20 +20,20 @@
         <el-col class="amap-wrapper" id="searchMap" :span="12">
             <el-amap-search-box class="search-box" v-model="searchText" :search-option="searchOption" :on-search-result="onSearchResult"></el-amap-search-box>
             <el-amap vid="amapDemo" :center="mapCenter" :zoom="12" class="amap-demo">
-                <el-amap-marker 
-                  v-for="(marker, index) in markers" 
-                  :events="marker.events"  
+                <el-amap-marker
+                  v-for="(marker, index) in markers"
+                  :events="marker.events"
                   :position="marker.position"
                   :visible="marker.visible"
                   :draggable="marker.draggable"
                   :key="index">
                 </el-amap-marker>
                 <el-amap-text
-                  v-for="marker in markers" 
+                  v-for="marker in markers"
                   :key="marker.id"
-                  :text="marker.num" 
-                  :offset=[-0.8,-20] 
-                  :position="marker.position" 
+                  :text="marker.num"
+                  :offset=[-0.8,-20]
+                  :position="marker.position"
                   :events="textsEvents">
                 </el-amap-text>
                 <el-amap-info-window
@@ -41,28 +44,25 @@
             </el-amap>
         </el-col>
         <el-col :span="6" v-if="poisCont">
-          <MultipleSelectionTable 
+          <MultipleSelectionTable
             id="results"
-            :tableData="resultsTableData" 
+            :tableData="resultsTableData"
             :columns="resultsTableCols"
             :selectedData="getSelectedPoints" />
         </el-col>
     </el-row>
-    <el-row class="amap-page-container">
-      <el-col class="amap-wrapper" :span="12">
-        <el-amap vid="amapDriving" :plugin="plugin" :center="mapCenter" class="amap-demo">
-        </el-amap>
-      </el-col>
-    </el-row>
+    <div id="container">
+      <div id="panel"></div>
+    </div>
   </div>
 </template>
 
 <script>
 // NPM 方式
-import { AMapManager } from 'vue-amap';
+// import VueAMap from 'vue-amap'
 import { mapState, mapGetters } from 'vuex'
 import MultipleSelectionTable from './table/multiSelectTable'
-
+// const amapManager = new VueAMap.AMapManager()
 export default {
   name: 'Search',
   components: {
@@ -73,9 +73,9 @@ export default {
     cityName: String
   },
   watch: {
-      '$route' (to) {
-        this.city = to.params.city || "";
-      },
+    '$route' (to) {
+      this.city = to.params.city || ''
+    }
   },
   computed: {
     ...mapState({
@@ -86,18 +86,18 @@ export default {
     }),
     mapCenterGetter: {
       get: function () {
-        return this.$store.getters["geolocation/geoLocaton"] ? [this.$store.getters["geolocation/geoLocaton"].substring(0,this.$store.getters["geolocation/geoLocaton"].indexOf(",")), this.$store.getters["geolocation/geoLocaton"].substring(this.$store.getters["geolocation/geoLocaton"].indexOf(",") + 1)] : ["", ""];
+        return this.$store.getters['geolocation/geoLocaton'] ? [this.$store.getters['geolocation/geoLocaton'].substring(0, this.$store.getters['geolocation/geoLocaton'].indexOf(',')), this.$store.getters['geolocation/geoLocaton'].substring(this.$store.getters['geolocation/geoLocaton'].indexOf(',') + 1)] : ['', '']
       },
       set: function (v) {
         this.currMapCenter = v
       }
-    },
+    }
 
   },
-  data: function() {
+  data: function () {
     return {
-      city: this.$route.params.city || "",
-      searchText: "",
+      city: this.$route.params.city || '',
+      searchText: '',
       geolocation: this.$route.params.location,
       screenWidth: document.body.clientWidth,
       poisCont: 0,
@@ -105,6 +105,7 @@ export default {
       markers: [],
       resultsTableData: [],
       resultsTableCols: [],
+      selectedCont: 0,
       selectedData: [],
       currentWindow: {
         id: '',
@@ -117,114 +118,114 @@ export default {
       textsEvents: {},
       searchOption: {
         city: this.$route.params.city,
-        citylimit: true,
+        citylimit: true
       },
       currMapCenter: this.mapCenterGetter,
-      mapCenter: [this.$route.params.location.substring(0,this.$route.params.location.indexOf(",")), this.$route.params.location.substring(this.$route.params.location.indexOf(",") + 1)],
-      amapManager: AMapManager,
-      events: {
-        init() {
-          
-        }
-      }
+      mapCenter: [this.$route.params.location.substring(0, this.$route.params.location.indexOf(',')), this.$route.params.location.substring(this.$route.params.location.indexOf(',') + 1)]
+      // amapManager,
+      // zoom: 12,
+      // routingCenter: [116.397428, 39.90923],
+      // events: {
+      //   init (o) {}
+      // }
     }
   },
-  mounted: function() {
-    const searchMap = document.getElementById("searchMap");
-    const appHeight = parseInt(window.innerHeight);
-    const headerHeight = parseInt(document.getElementsByClassName("hello")[0].clientHeight);
-    const searchHeight = parseInt(document.getElementsByClassName("search")[0].clientHeight);
-    searchMap.style.height = (appHeight - 16 - headerHeight - 40 - searchHeight - 40).toString() + "px";
-  
+  mounted: function () {
+    const searchMap = document.getElementById('searchMap')
+    const appHeight = parseInt(window.innerHeight)
+    const headerHeight = parseInt(document.getElementsByClassName('hello')[0].clientHeight)
+    const searchHeight = parseInt(document.getElementsByClassName('search')[0].clientHeight)
+    searchMap.style.height = (appHeight - 16 - headerHeight - 40 - searchHeight - 40).toString() + 'px'
+
     // from city to get geolocation
     const payload = {
-      "placeName": this.city,
-      "router": '',
-      "topath": ''
-    };
-    this.$store.dispatch('geolocation/getGeolocation', payload);
+      placeName: this.city,
+      router: '',
+      topath: ''
+    }
+    this.$store.dispatch('geolocation/getGeolocation', payload)
 
     // set mapCenter to currMapCenter
-    this.currMapCenter = this.mapCenter;
+    this.currMapCenter = this.mapCenter
 
     // set resultTableCols
     this.resultsTableCols = [
       {
-        "id": '1',
-        "label": '',
-        "prop": '',
-        "type": 'index',
-        "formatter": null
+        id: '1',
+        label: '',
+        prop: '',
+        type: 'index',
+        formatter: null
       },
       {
-        "id": '2',
-        "label": '搜索结果',
-        "prop": '',
-        "type": '',
-        "formatter": (row) => {return row.content;}
+        id: '2',
+        label: '搜索结果',
+        prop: '',
+        type: '',
+        formatter: (row) => { return row.content }
       }
-    ];
+    ]
 
     // set textsEvents style
     this.textsEvents = {
-      init(o) {
+      init (o) {
         o.setStyle({
           background: '#fff0',
           border: '0px',
           padding: '30px 15px',
           fontSize: 'small',
           fontWeight: 600
-        });
+        })
       }
-    };
+    }
   },
   updated: function () {
-    this.mapCenter = this.currMapCenter[0] + this.currMapCenter[1] === this.mapCenterGetter[0] + this.mapCenterGetter[1] ? this.currMapCenter : this.mapCenterGetter;
-    this.searchOption.city = this.city;
+    this.mapCenter = this.currMapCenter[0] + this.currMapCenter[1] === this.mapCenterGetter[0] + this.mapCenterGetter[1] ? this.currMapCenter : this.mapCenterGetter
+    this.searchOption.city = this.city
 
     // according to results table height to change map height
-    const resultDom = document.getElementById("results");
-    const searchMap = document.getElementById("searchMap");
+    const resultDom = document.getElementById('results')
+    const searchMap = document.getElementById('searchMap')
     if (resultDom && searchMap) {
-      searchMap.style.height = resultDom.style.height;
+      searchMap.style.height = resultDom.style.height
     }
   },
   methods: {
-    search: function() {
+    search: function () {
       // from city to get geolocation
       const payload = {
-        "placeName": this.city,
-        "router": '',
-        "topath": ''
-      };
-      this.$store.dispatch('geolocation/getGeolocation', payload);
+        placeName: this.city,
+        router: '',
+        topath: ''
+      }
+      this.$store.dispatch('geolocation/getGeolocation', payload)
     },
-    onSearchResult: function(pois) {
-      let latSum = 0;
-      let lngSum = 0;
+    onSearchResult: function (pois) {
+      let latSum = 0
+      let lngSum = 0
       if (pois.length > 0) {
-        let that = this;
+        const that = this
         const isPoisEqual = pois.every((val, index) => {
-          return (val === that.currPois[index]);
-        });
+          return (val === that.currPois[index])
+        })
         if (!isPoisEqual) {
-          this.poisCont = 0;
-          this.markers.length = 0;
-          this.currPois.length = 0;
-          this.currPois = pois;
-          this.resultsTableData.length = 0;
-          this.infoWindows.length = 0;
+          this.poisCont = 0
+          this.markers.length = 0
+          this.currPois.length = 0
+          this.currPois = pois
+          this.resultsTableData.length = 0
+          this.infoWindows.length = 0
           this.currentWindow = {
             id: '',
             num: 0,
             position: [0, 0],
             content: '',
             visible: false
-          };
-          this.mapCenter = [0, 0];
+          }
+          this.mapCenter = [0, 0]
         }
 
-        if (this.currentWindow.position[0] + this.currentWindow.position[1] === 0 && this.currentWindow.content === "") {
+        if (this.currentWindow.position[0] + this.currentWindow.position[1] === 0 && this.currentWindow.content === '') {
           this.currentWindow = {
             position: [pois[0].lng, pois[0].lat],
             content: pois[0].name,
@@ -235,59 +236,140 @@ export default {
         }
 
         pois.forEach((poi, index) => {
-            let oneMarker = {};
-            let oneInfoWindow = {};
-            let oneResultData = {};
-            let {lng, lat, id, name, address, type} = poi;
-            lngSum += lng;
-            latSum += lat;
-            oneMarker.num = (index + 1).toString();
-            oneMarker.position = [lng, lat];
-            oneMarker.id = id;
-            oneMarker.visible = true;
-            oneMarker.draggable = false;
+          const oneMarker = {}
+          const oneInfoWindow = {}
+          const oneResultData = {}
+          const { lng, lat, id, name, address, type } = poi
+          lngSum += lng
+          latSum += lat
+          oneMarker.num = (index + 1).toString()
+          oneMarker.position = [lng, lat]
+          oneMarker.id = id
+          oneMarker.visible = true
+          oneMarker.draggable = false
 
-            oneInfoWindow.visible = false;
-            oneInfoWindow.position = [lng, lat];
-            oneInfoWindow.id = id;
-            oneInfoWindow.num = index;
-            oneInfoWindow.content = name;
+          oneInfoWindow.visible = false
+          oneInfoWindow.position = [lng, lat]
+          oneInfoWindow.id = id
+          oneInfoWindow.num = index
+          oneInfoWindow.content = name
 
-            oneResultData.id = id;
-            oneResultData.num = index + 1;
-            oneResultData.content = name + '\n' + address + '\n' + type;
+          oneResultData.id = id
+          oneResultData.num = index + 1
+          oneResultData.content = name + '\n' + address + '\n' + type
+          oneResultData.point = [lng, lat]
 
-            oneMarker.events = {
-              click: () => {
-                that.currentWindow.visible = false;
-                that.currentWindow = that.infoWindows[index];
-                // that.currentWindow = {
-                //   position: [e.lnglat.lng, e.lnglat.lat],
-                //   content: pois[index].name
-                // };
-                that.$nextTick(() => {
-                  that.currentWindow.visible = true;
-                });
-              }
-            };
+          oneMarker.events = {
+            click: () => {
+              that.currentWindow.visible = false
+              that.currentWindow = that.infoWindows[index]
+              // that.currentWindow = {
+              //   position: [e.lnglat.lng, e.lnglat.lat],
+              //   content: pois[index].name
+              // };
+              that.$nextTick(() => {
+                that.currentWindow.visible = true
+              })
+            }
+          }
 
-            that.markers.push(oneMarker);
-            that.infoWindows.push(oneInfoWindow);
-            that.resultsTableData.push(oneResultData);
-        });
+          that.markers.push(oneMarker)
+          that.infoWindows.push(oneInfoWindow)
+          that.resultsTableData.push(oneResultData)
+        })
 
-        let center = {
-            lng: lngSum / pois.length,
-            lat: latSum / pois.length
-        };
-        this.poisCont = this.markers.length;
-        this.mapCenterGetter = [0, 0];
-        this.mapCenter = [center.lng, center.lat];
+        const center = {
+          lng: lngSum / pois.length,
+          lat: latSum / pois.length
+        }
+        this.poisCont = this.markers.length
+        this.mapCenterGetter = [0, 0]
+        this.mapCenter = [center.lng, center.lat]
       }
     },
     // accept the selected result
-    getSelectedPoints: function(selected) {
-      this.selectedData = selected;
+    getSelectedPoints: function (selected) {
+      this.selectedData = selected
+      this.selectedCont = selected.length
+    },
+    plan: function () {
+      // clear routing map and panel before planning
+      const routingMap = document.getElementById('container')
+      while (routingMap.lastChild.id !== 'panel') {
+        routingMap.removeChild(routingMap.lastChild)
+      }
+      const routingPanel = document.getElementById('panel')
+      while (routingPanel.firstChild) {
+        routingPanel.removeChild(routingPanel.firstChild)
+      }
+
+      const that = this
+      const selections = this.selectedData
+      let routingCenter = []
+      if (selections.length) {
+        let lngSum = 0
+        let latSum = 0
+        selections.forEach((poi) => {
+          const { point } = poi
+          lngSum += point[0]
+          latSum += point[1]
+        })
+        const center = {
+          lng: lngSum / selections.length,
+          lat: latSum / selections.length
+        }
+        routingCenter.push(center.lng)
+        routingCenter.push(center.lat)
+      } else {
+        routingCenter = this.mapCenter
+      }
+      // 基本地图加载
+      const map = new AMap.Map('container', {
+        resizeEnable: true,
+        center: routingCenter, // 地图中心点
+        zoom: 13 // 地图显示的缩放级别
+      })
+
+      if (!document.getElementById('panel')) {
+        const panelDiv = document.createElement('div')
+        panelDiv.setAttribute('id', 'panel')
+        routingMap.appendChild(panelDiv)
+
+        panelDiv.setAttribute('style', 'position: relative; float: right; background-color: white; right: 10px; width: 280px; z-index: 1; max-height: 90%; overflow-y: auto;')
+
+        const panelDivAmapCall = panelDiv.getElementsByClassName('amap-call')
+        panelDivAmapCall.forEach(amapCall => {
+          amapCall.style.backgroundColor = '#009cf9'
+          amapCall.style.borderTopLeftRadius = '4px'
+          amapCall.style.borderTopRightRadius = '4px'
+        })
+
+        const panelDivAmapDriving = panelDiv.getElementsByClassName('amap-lib-driving')
+        panelDivAmapDriving.forEach(amapDriving => {
+          amapDriving.style.overflow = 'hidden'
+          amapDriving.style.borderTopLeftRadius = '4px'
+          amapDriving.style.borderTopRightRadius = '4px'
+        })
+      }
+
+      // 构造路线导航类
+      const driving = new AMap.Driving({
+        map: map,
+        panel: 'panel'
+      })
+
+      // 根据起终点经纬度规划驾车导航路线
+      driving.search(new AMap.LngLat(that.selectedData[0].point[0], that.selectedData[0].point[1]), new AMap.LngLat(that.selectedData[1].point[0], that.selectedData[1].point[1]), function (status, result) {
+        // result 即是对应的驾车导航信息，相关数据结构文档请参考  https://lbs.amap.com/api/javascript-api/reference/route-search#m_DrivingResult
+        if (status === 'complete') {
+          alert('绘制驾车路线完成')
+          const routingDOM = document.getElementById('container')
+          const searchMap = document.getElementById('searchMap')
+          routingDOM.style.height = searchMap.offsetHeight.toString() + 'px'
+        } else {
+          alert('获取驾车数据失败：' + result)
+        }
+      })
     }
   }
 }
@@ -301,20 +383,54 @@ export default {
   justify-content: center;
 }
 .el-col-10 {
-    display: flex;
-    margin-left: 300px;
+  display: flex;
+  margin-left: 300px;
 }
-.el-col-4 {
-    display: flex;
-    margin-left: 20px;
+.el-col-2 {
+  display: flex;
+  margin-left: 25px;
+}
+.el-col-6 {
+  margin-left: 15px;
+}
+#planning {
+  margin-left: -40px;
 }
 .amap-wrapper {
   width: 100%;
 }
 
 .search-box {
-    position: absolute;
-    top: 25px;
-    left: 20px;
+  position: absolute;
+  top: 25px;
+  left: 20px;
+}
+#searchRouting {
+  height: 500px;
+}
+
+#container {
+  width: 98%;
+  margin: 25px;
+}
+#panel {
+  float: right;
+  position: relative;
+  background-color: white;
+  max-height: 90%;
+  overflow-y: auto;
+  right: 10px;
+  width: 280px;
+  z-index: 1;
+}
+#panel .amap-call {
+  background-color: #009cf9;
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+}
+#panel .amap-lib-driving {
+  border-bottom-left-radius: 4px;
+  border-bottom-right-radius: 4px;
+  overflow: hidden;
 }
 </style>

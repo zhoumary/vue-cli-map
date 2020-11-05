@@ -9,7 +9,7 @@
             type="selection"
             width="55">
         </el-table-column>
-        <el-table-column 
+        <el-table-column
             v-for="attr in attrs"
             :key="attr.id"
             :prop="attr.prop"
@@ -22,30 +22,30 @@
 
 <script>
 export default {
-    name: 'MultipleSelectionTable',
-    props: {
-        tableData: Array,
-        columns: Array,
-        selectedData: Function
-    },
-    data: function() {
-        return {
-            details: [],
-            attrs: [],
-            multipleSelection: [],
-        };
-    },
-    mounted: function() {
-        this.details = this.$props.tableData;
-        this.attrs = this.$props.columns;
-    },
-    methods: {
-        handleSelectionChange(val) {
-            this.multipleSelection = val;
-
-            this.$props.selectedData(val);
-        }
+  name: 'MultipleSelectionTable',
+  props: {
+    tableData: Array,
+    columns: Array,
+    selectedData: Function
+  },
+  data: function () {
+    return {
+      details: [],
+      attrs: [],
+      multipleSelection: []
     }
+  },
+  mounted: function () {
+    this.details = this.$props.tableData
+    this.attrs = this.$props.columns
+  },
+  methods: {
+    handleSelectionChange (val) {
+      this.multipleSelection = val
+
+      this.$props.selectedData(val)
+    }
+  }
 }
 </script>
 
