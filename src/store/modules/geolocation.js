@@ -2,7 +2,8 @@ import geolocation from '../../api/geolocation'
 
 // initial state
 const state = () => ({
-  geolocation: ''
+  geolocation: '',
+  distance: 0
 })
 
 // getters
@@ -20,6 +21,14 @@ const actions = {
       (geocode) => commit('setGeolocation', { geolocation: geocode, router: router, topath: topath }),
       () => commit('setGeolocation', { geolocation: '', router: router, topath: topath })
     )
+  },
+  getDistance ({ commit }, { startPoint, endPoint }) {
+    geolocation.getDistance(
+      startPoint,
+      endPoint,
+      (distance) => commit('setDistance', { distance: distance }),
+      () => commit('setDistance', { distance: 0 })
+    )
   }
 }
 
@@ -30,6 +39,9 @@ const mutations = {
     if (geolocation && router) {
       router.push(topath + geolocation)
     }
+  },
+  setDistance (state, { distance }) {
+    state.distance = distance
   }
 }
 

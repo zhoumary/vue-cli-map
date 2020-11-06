@@ -79,7 +79,8 @@ export default {
   },
   computed: {
     ...mapState({
-      geoLocation: state => state.geolocation.geolocation
+      geoLocation: state => state.geolocation.geolocation,
+      getDistance: state => state.geolocation.distance
     }),
     ...mapGetters('geolocation', {
       currGeolocation: 'geoLocaton'
@@ -121,7 +122,8 @@ export default {
         citylimit: true
       },
       currMapCenter: this.mapCenterGetter,
-      mapCenter: [this.$route.params.location.substring(0, this.$route.params.location.indexOf(',')), this.$route.params.location.substring(this.$route.params.location.indexOf(',') + 1)]
+      mapCenter: [this.$route.params.location.substring(0, this.$route.params.location.indexOf(',')), this.$route.params.location.substring(this.$route.params.location.indexOf(',') + 1)],
+      placesOrder: []
       // amapManager,
       // zoom: 12,
       // routingCenter: [116.397428, 39.90923],
@@ -358,18 +360,38 @@ export default {
         panel: 'panel'
       })
 
-      // 根据起终点经纬度规划驾车导航路线
-      driving.search(new AMap.LngLat(that.selectedData[0].point[0], that.selectedData[0].point[1]), new AMap.LngLat(that.selectedData[1].point[0], that.selectedData[1].point[1]), function (status, result) {
-        // result 即是对应的驾车导航信息，相关数据结构文档请参考  https://lbs.amap.com/api/javascript-api/reference/route-search#m_DrivingResult
-        if (status === 'complete') {
-          alert('绘制驾车路线完成')
-          const routingDOM = document.getElementById('container')
-          const searchMap = document.getElementById('searchMap')
-          routingDOM.style.height = searchMap.offsetHeight.toString() + 'px'
-        } else {
-          alert('获取驾车数据失败：' + result)
-        }
-      })
+      // 根据筛选出来的地点进行出行地点排序，并且已第一个地点为起始点和终点
+      if (selections.length > 2) {
+        // 提取所有地点的位置信息， 并提取出第一个点
+        const selectionPoints = selections.map((selection, index) => {
+          return selection[index].point
+        })
+        const firstEndPoint = selectionPoints[0]
+
+        // 以第一个点为起始点，延伸至其它各点，得到距离最近的点作为第二个点，以此递推找到经历所有点的一条路线
+        const restPoints = selectionPoints.shift()
+        restPoints.forEach(restPoint => {
+          // from city to get geolocation
+          const payload = {
+            startPoint: firstEndPoint,
+            endPoint: restPoint
+          }
+          this.$store.dispatch('geolocation/getDistance', payload)
+        })
+      } else {
+        // 根据起终点经纬度规划驾车导航路线，仅针对只有两个地方的情况
+        driving.search(new AMap.LngLat(that.selectedData[0].point[0], that.selectedData[0].point[1]), new AMap.LngLat(that.selectedData[1].point[0], that.selectedData[1].point[1]), function (status, result) {
+          // result 即是对应的驾车导航信息，相关数据结构文档请参考  https://lbs.amap.com/api/javascript-api/reference/route-search#m_DrivingResult
+          if (status === 'complete') {
+            alert('绘制驾车路线完成')
+            const routingDOM = document.getElementById('container')
+            const searchMap = document.getElementById('searchMap')
+            routingDOM.style.height = searchMap.offsetHeight.toString() + 'px'
+          } else {
+            alert('获取驾车数据失败：' + result)
+          }
+        })
+      }
     }
   }
 }

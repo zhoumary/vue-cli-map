@@ -23,5 +23,24 @@ export default {
         console.log(err)
         errorCb('')
       })
+  },
+  getDistance (startPosition, endPosition, cb, errorCb) {
+    const getDistanceUrl = 'https://restapi.amap.com/v3/geocode/geo?origin=' + startPosition + '&destination=' + endPosition + '&key=' + '29b3305fe75feb8d14d4190c932ba7c9'
+
+    Vue.axios.get(getDistanceUrl)
+      .then((response) => {
+        const data = response.data
+        const routePaths = data && data.route.paths
+        if (routePaths && routePaths.length !== 0) {
+          const distance = routePaths[0].distance
+          distance ? cb(distance) : errorCb(0)
+        } else {
+          errorCb('')
+        }
+      })
+      .catch((err) => {
+        console.log(err)
+        errorCb(0)
+      })
   }
 }
