@@ -24,9 +24,15 @@ const router = new VueRouter({
 
 Vue.use(VueAxios, axios)
 
+// 清除之前缓存的地图信息
+const amapKeys = Object.keys(localStorage).filter(key => key.match(/^_AMap_/))
+
+amapKeys.forEach(key => {
+  localStorage.removeItem(key)
+})
 Vue.use(VueAMap)
 VueAMap.initAMapApiLoader({
-  key: 'your web js api key',
+  key: '411e5b31c281c0c5d09266a3ea2b7983',
   plugin: [
     'AMap.Autocomplete',
     'AMap.PlaceSearch',

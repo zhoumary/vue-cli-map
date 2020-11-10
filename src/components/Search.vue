@@ -60,8 +60,10 @@
 <script>
 // NPM 方式
 // import VueAMap from 'vue-amap'
+import Vue from 'vue'
 import { mapState, mapGetters } from 'vuex'
 import MultipleSelectionTable from './table/multiSelectTable'
+import recursion from '../utils/recursion'
 // const amapManager = new VueAMap.AMapManager()
 export default {
   name: 'Search',
@@ -80,7 +82,7 @@ export default {
   computed: {
     ...mapState({
       geoLocation: state => state.geolocation.geolocation,
-      getDistance: state => state.geolocation.distance
+      distance: state => state.geolocation.distance
     }),
     ...mapGetters('geolocation', {
       currGeolocation: 'geoLocaton'
@@ -92,8 +94,10 @@ export default {
       set: function (v) {
         this.currMapCenter = v
       }
+    },
+    pointsDestinationGetter () {
+      return this.$store.state.distance
     }
-
   },
   data: function () {
     return {
@@ -294,6 +298,10 @@ export default {
       this.selectedData = selected
       this.selectedCont = selected.length
     },
+    getPointsDistance: function (payload) {
+      const getDistanceUrl = 'https://restapi.amap.com/v3/direction/driving?origin=' + payload.startPoint[0] + ',' + payload.startPoint[1] + '&destination=' + payload.endPoint[0] + ',' + payload.endPoint[1] + '&key=' + '29b3305fe75feb8d14d4190c932ba7c9'
+      return Vue.axios.get(getDistanceUrl)
+    },
     plan: function () {
       // clear routing map and panel before planning
       const routingMap = document.getElementById('container')
@@ -329,7 +337,7 @@ export default {
       const map = new AMap.Map('container', {
         resizeEnable: true,
         center: routingCenter, // 地图中心点
-        zoom: 13 // 地图显示的缩放级别
+        zoom: 10 // 地图显示的缩放级别
       })
 
       if (!document.getElementById('panel')) {
@@ -364,20 +372,17 @@ export default {
       if (selections.length > 2) {
         // 提取所有地点的位置信息， 并提取出第一个点
         const selectionPoints = selections.map((selection, index) => {
-          return selection[index].point
+          return selection.point
         })
-        const firstEndPoint = selectionPoints[0]
 
         // 以第一个点为起始点，延伸至其它各点，得到距离最近的点作为第二个点，以此递推找到经历所有点的一条路线
-        const restPoints = selectionPoints.shift()
-        restPoints.forEach(restPoint => {
-          // from city to get geolocation
-          const payload = {
-            startPoint: firstEndPoint,
-            endPoint: restPoint
-          }
-          this.$store.dispatch('geolocation/getDistance', payload)
-        })
+        // const that = this
+        const restPoints = selectionPoints.slice(0)
+        restPoints.shift()
+        const firstPoint = selectionPoints[0]
+
+        // eslint-disable-next-line no-unused-vars
+        const sortedPoints = recursion.minDistance(firstPoint, restPoints, selectionPoints, [], driving)
       } else {
         // 根据起终点经纬度规划驾车导航路线，仅针对只有两个地方的情况
         driving.search(new AMap.LngLat(that.selectedData[0].point[0], that.selectedData[0].point[1]), new AMap.LngLat(that.selectedData[1].point[0], that.selectedData[1].point[1]), function (status, result) {
