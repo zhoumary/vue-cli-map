@@ -31,5 +31,6 @@ See [Configuration Reference](https://cli.vuejs.org/config/).
 3. use vuex to manage states
 4. use vue-axios to manage apis
 5. planning driving routing by calculating the min distance startPoint to other points, and do the recursion to get the min passing routes
+6. use el-dialog to show the driving routing
 
 ```
