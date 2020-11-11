@@ -51,9 +51,15 @@
             :selectedData="getSelectedPoints" />
         </el-col>
     </el-row>
-    <div id="container">
-      <div id="panel"></div>
-    </div>
+    <!-- <FullScreenDialog v-show="showDialog" title="Driving Routing" dialogKey="planningDialog" /> -->
+    <el-dialog
+      v-show="showDialog"
+      id="planningDialog"
+      title="Driving Routing"
+      width="95%"
+      @close="closeDialog"
+      center>
+    </el-dialog>
   </div>
 </template>
 
@@ -63,12 +69,14 @@
 import Vue from 'vue'
 import { mapState, mapGetters } from 'vuex'
 import MultipleSelectionTable from './table/multiSelectTable'
+// import FullScreenDialog from './dialog/FullScreenDialog'
 import recursion from '../utils/recursion'
 // const amapManager = new VueAMap.AMapManager()
 export default {
   name: 'Search',
   components: {
     MultipleSelectionTable
+    // FullScreenDialog
   },
   props: {
     msg: String,
@@ -127,7 +135,8 @@ export default {
       },
       currMapCenter: this.mapCenterGetter,
       mapCenter: [this.$route.params.location.substring(0, this.$route.params.location.indexOf(',')), this.$route.params.location.substring(this.$route.params.location.indexOf(',') + 1)],
-      placesOrder: []
+      placesOrder: [],
+      showDialog: false
       // amapManager,
       // zoom: 12,
       // routingCenter: [116.397428, 39.90923],
@@ -303,14 +312,41 @@ export default {
       return Vue.axios.get(getDistanceUrl)
     },
     plan: function () {
-      // clear routing map and panel before planning
-      const routingMap = document.getElementById('container')
-      while (routingMap.lastChild.id !== 'panel') {
-        routingMap.removeChild(routingMap.lastChild)
-      }
-      const routingPanel = document.getElementById('panel')
-      while (routingPanel.firstChild) {
-        routingPanel.removeChild(routingPanel.firstChild)
+      // show dialog
+      this.showDialog = true
+
+      // clear routing map and panel before planningDialog
+      let routingMap = document.getElementById('container')
+      if (!routingMap) {
+        // const planningDialog = document.getElementById('planningDialog')
+        const dialogContent = document.getElementsByClassName('el-dialog el-dialog--center')
+        if (dialogContent.length) {
+          routingMap = document.createElement('div')
+          routingMap.setAttribute('id', 'container')
+          dialogContent[0].appendChild(routingMap)
+          dialogContent[0].setAttribute('style', 'width: 95%; margin-top: 0px !important;')
+          routingMap.setAttribute('style', 'width: 95%; margin: 25px; margin-top: 0px !important; margin-left:40px;')
+
+          const panelDiv = document.createElement('div')
+          panelDiv.setAttribute('id', 'panel')
+          routingMap.appendChild(panelDiv)
+
+          panelDiv.setAttribute('style', 'position: relative; float: right; background-color: white; right: 10px; width: 280px; z-index: 1; max-height: 90%; overflow-y: auto;')
+
+          const panelDivAmapCall = panelDiv.getElementsByClassName('amap-call')
+          panelDivAmapCall.forEach(amapCall => {
+            amapCall.style.backgroundColor = '#009cf9'
+            amapCall.style.borderTopLeftRadius = '4px'
+            amapCall.style.borderTopRightRadius = '4px'
+          })
+
+          const panelDivAmapDriving = panelDiv.getElementsByClassName('amap-lib-driving')
+          panelDivAmapDriving.forEach(amapDriving => {
+            amapDriving.style.overflow = 'hidden'
+            amapDriving.style.borderTopLeftRadius = '4px'
+            amapDriving.style.borderTopRightRadius = '4px'
+          })
+        }
       }
 
       const that = this
@@ -340,28 +376,6 @@ export default {
         zoom: 10 // 地图显示的缩放级别
       })
 
-      if (!document.getElementById('panel')) {
-        const panelDiv = document.createElement('div')
-        panelDiv.setAttribute('id', 'panel')
-        routingMap.appendChild(panelDiv)
-
-        panelDiv.setAttribute('style', 'position: relative; float: right; background-color: white; right: 10px; width: 280px; z-index: 1; max-height: 90%; overflow-y: auto;')
-
-        const panelDivAmapCall = panelDiv.getElementsByClassName('amap-call')
-        panelDivAmapCall.forEach(amapCall => {
-          amapCall.style.backgroundColor = '#009cf9'
-          amapCall.style.borderTopLeftRadius = '4px'
-          amapCall.style.borderTopRightRadius = '4px'
-        })
-
-        const panelDivAmapDriving = panelDiv.getElementsByClassName('amap-lib-driving')
-        panelDivAmapDriving.forEach(amapDriving => {
-          amapDriving.style.overflow = 'hidden'
-          amapDriving.style.borderTopLeftRadius = '4px'
-          amapDriving.style.borderTopRightRadius = '4px'
-        })
-      }
-
       // 构造路线导航类
       const driving = new AMap.Driving({
         map: map,
@@ -388,7 +402,8 @@ export default {
         driving.search(new AMap.LngLat(that.selectedData[0].point[0], that.selectedData[0].point[1]), new AMap.LngLat(that.selectedData[1].point[0], that.selectedData[1].point[1]), function (status, result) {
           // result 即是对应的驾车导航信息，相关数据结构文档请参考  https://lbs.amap.com/api/javascript-api/reference/route-search#m_DrivingResult
           if (status === 'complete') {
-            alert('绘制驾车路线完成')
+            // show dialog
+            this.showDialog = true
             const routingDOM = document.getElementById('container')
             const searchMap = document.getElementById('searchMap')
             routingDOM.style.height = searchMap.offsetHeight.toString() + 'px'
@@ -397,6 +412,13 @@ export default {
           }
         })
       }
+    },
+    closeDialog: function (params) {
+      // remove the drive routing map
+      const containerDOM = document.getElementById('container')
+      containerDOM && containerDOM.remove()
+
+      this.showDialog = false
     }
   }
 }
@@ -405,7 +427,8 @@ export default {
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
 .el-row {
-  margin: 20px;
+  margin-left: 20px;
+  margin-right: 20px;
   display: flex !important;
   justify-content: center;
 }
@@ -436,6 +459,15 @@ export default {
   height: 500px;
 }
 
+.el-dialog__wrapper {
+  position: fixed;
+  padding-top: 4.5%;
+  background-color: rgb(53 49 49 / 30%);
+  z-index: 999;
+}
+.el-dialog__wrapper.el-dialog--center {
+  margin-top: 0px !important;
+}
 #container {
   width: 98%;
   margin: 25px;
