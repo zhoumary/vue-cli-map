@@ -52,8 +52,10 @@
         </el-col>
     </el-row>
     <!-- <FullScreenDialog v-show="showDialog" title="Driving Routing" dialogKey="planningDialog" /> -->
+    <!-- <FullLoading :isLoading="isLoading" /> -->
+    <div id="fullLoading" v-show="isLoading">Loading...</div>
     <el-dialog
-      v-show="showDialog"
+      v-show="routingVisible"
       id="planningDialog"
       title="Driving Routing"
       width="95%"
@@ -70,12 +72,14 @@ import Vue from 'vue'
 import { mapState, mapGetters } from 'vuex'
 import MultipleSelectionTable from './table/multiSelectTable'
 // import FullScreenDialog from './dialog/FullScreenDialog'
-import recursion from '../utils/recursion'
+// import FullLoading from './loading/FullLoading'
+// import recursion from '../utils/recursion'
 // const amapManager = new VueAMap.AMapManager()
 export default {
   name: 'Search',
   components: {
     MultipleSelectionTable
+    // FullLoading
     // FullScreenDialog
   },
   props: {
@@ -88,12 +92,10 @@ export default {
     }
   },
   computed: {
-    ...mapState({
-      geoLocation: state => state.geolocation.geolocation,
-      distance: state => state.geolocation.distance
-    }),
+    ...mapState('geolocation', ['routingVisible', 'isLoading']),
     ...mapGetters('geolocation', {
-      currGeolocation: 'geoLocaton'
+      currGeolocation: 'geoLocaton',
+      isrouting: 'isRouting'
     }),
     mapCenterGetter: {
       get: function () {
@@ -312,8 +314,14 @@ export default {
       return Vue.axios.get(getDistanceUrl)
     },
     plan: function () {
-      // show dialog
-      this.showDialog = true
+      // show loading
+      const loadingDOM = document.getElementById('fullLoading')
+      if (loadingDOM) {
+        loadingDOM.style.height = (window.innerHeight).toString() + 'px'
+        loadingDOM.style.marginTop = (-window.innerHeight).toString() + 'px'
+        loadingDOM.style.lineHeight = (window.outerHeight).toString() + 'px'
+      }
+      this.$store.dispatch('geolocation/openLoading')
 
       // clear routing map and panel before planningDialog
       let routingMap = document.getElementById('container')
@@ -396,19 +404,39 @@ export default {
         const firstPoint = selectionPoints[0]
 
         // eslint-disable-next-line no-unused-vars
-        const sortedPoints = recursion.minDistance(firstPoint, restPoints, selectionPoints, [], driving)
+        // const sortedPoints = recursion.minDistance(firstPoint, restPoints, selectionPoints, [], driving)
+        const payload = {
+          startPoint: firstPoint,
+          restPoints: restPoints,
+          selectedPoints: selectionPoints,
+          sortedPoints: [],
+          driving: driving
+        }
+        // show dialog
+        this.$store.dispatch('geolocation/getDrivingRouting', payload)
       } else {
+        // show loading
+        const loadingDOM = document.getElementById('fullLoading')
+        if (loadingDOM) {
+          loadingDOM.style.height = (window.innerHeight).toString() + 'px'
+          loadingDOM.style.marginTop = (-window.innerHeight).toString() + 'px'
+        }
+        this.$store.dispatch('geolocation/openLoading')
+
         // 根据起终点经纬度规划驾车导航路线，仅针对只有两个地方的情况
         driving.search(new AMap.LngLat(that.selectedData[0].point[0], that.selectedData[0].point[1]), new AMap.LngLat(that.selectedData[1].point[0], that.selectedData[1].point[1]), function (status, result) {
           // result 即是对应的驾车导航信息，相关数据结构文档请参考  https://lbs.amap.com/api/javascript-api/reference/route-search#m_DrivingResult
           if (status === 'complete') {
             // show dialog
-            this.showDialog = true
+            this.$store.dispatch('geolocation/closeLoading')
+            that.$store.dispatch('geolocation/openDrivingRouting')
             const routingDOM = document.getElementById('container')
             const searchMap = document.getElementById('searchMap')
             routingDOM.style.height = searchMap.offsetHeight.toString() + 'px'
           } else {
             alert('获取驾车数据失败：' + result)
+            // close dialog
+            that.$store.dispatch('geolocation/closeDrivingRouting')
           }
         })
       }
@@ -418,7 +446,8 @@ export default {
       const containerDOM = document.getElementById('container')
       containerDOM && containerDOM.remove()
 
-      this.showDialog = false
+      // close dialog
+      this.$store.dispatch('geolocation/closeDrivingRouting')
     }
   }
 }
@@ -457,6 +486,21 @@ export default {
 }
 #searchRouting {
   height: 500px;
+}
+
+#fullLoading {
+  position: fixed;
+  width: 100%;
+  background-color: rgb(53 49 49 / 30%);
+  z-index: 1000;
+  text-align: center;
+  color: #e0e3e8;
+  font-size: xxx-large;
+  font-weight: 800;
+  font-style: oblique;
+  letter-spacing: 4px;
+  bottom: 0;
+  left: 0;
 }
 
 .el-dialog__wrapper {
