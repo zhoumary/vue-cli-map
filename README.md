@@ -33,4 +33,5 @@ See [Configuration Reference](https://cli.vuejs.org/config/).
 5. planning driving routing by calculating the min distance startPoint to other points, and do the recursion to get the min passing routes
 6. add loading screen before getting driving routes
 7. use el-dialog to show the driving routing
+8. make full screen loading and full screen dialog component
 ```
