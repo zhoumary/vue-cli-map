@@ -1,25 +1,36 @@
 <template>
   <div>
     <el-row class="search">
-      <el-col :span="10">
+      <el-col :span="6">
+        <el-input
+          placeholder="Please input start place"
+          v-model="startPlace"
+          clearable>
+        </el-input>
+      </el-col>
+    </el-row>
+    <el-row class="search">
+      <el-col :span="6">
         <el-input
           placeholder="Please input city"
           v-model="city"
           clearable>
         </el-input>
       </el-col>
-      <el-col :span="2">
+    </el-row>
+    <el-row>
+      <el-col :span="4">
         <el-button size="medium" type="primary" @click="search">Search</el-button>
       </el-col>
-      <el-col :span="2" id="planning" v-if="selectedCont">
+      <el-col :span="4" id="planning" v-if="selectedCont">
         <el-button size="medium" type="info" @click="plan">Planning</el-button>
       </el-col>
     </el-row>
-    <p v-show="currGeolocation">{{currGeolocation}}</p>
+
     <el-row class="amap-page-container">
         <el-col class="amap-wrapper" id="searchMap" :span="12">
             <el-amap-search-box class="search-box" v-model="searchText" :search-option="searchOption" :on-search-result="onSearchResult"></el-amap-search-box>
-            <el-amap vid="amapDemo" :center="mapCenter" :zoom="12" class="amap-demo">
+            <el-amap vid="amapDemo" :center="location" :zoom="12" class="amap-demo">
                 <el-amap-marker
                   v-for="(marker, index) in markers"
                   :events="marker.events"
@@ -83,25 +94,15 @@ export default {
     }
   },
   computed: {
-    ...mapState('geolocation', ['routingVisible', 'isLoading']),
+    ...mapState('geolocation', ['location', 'routingVisible', 'isLoading']),
     ...mapGetters('geolocation', {
       currGeolocation: 'geoLocaton',
       isrouting: 'isRouting'
-    }),
-    mapCenterGetter: {
-      get: function () {
-        return this.$store.getters['geolocation/geoLocaton'] ? [this.$store.getters['geolocation/geoLocaton'].substring(0, this.$store.getters['geolocation/geoLocaton'].indexOf(',')), this.$store.getters['geolocation/geoLocaton'].substring(this.$store.getters['geolocation/geoLocaton'].indexOf(',') + 1)] : ['', '']
-      },
-      set: function (v) {
-        this.currMapCenter = v
-      }
-    },
-    pointsDestinationGetter () {
-      return this.$store.state.distance
-    }
+    })
   },
   data: function () {
     return {
+      startPlace: '',
       city: this.$route.params.city || '',
       searchText: '',
       geolocation: this.$route.params.location,
@@ -126,8 +127,6 @@ export default {
         city: this.$route.params.city,
         citylimit: true
       },
-      currMapCenter: this.mapCenterGetter,
-      mapCenter: [this.$route.params.location.substring(0, this.$route.params.location.indexOf(',')), this.$route.params.location.substring(this.$route.params.location.indexOf(',') + 1)],
       placesOrder: [],
       showDialog: false
       // amapManager,
@@ -152,9 +151,6 @@ export default {
       topath: ''
     }
     this.$store.dispatch('geolocation/getGeolocation', payload)
-
-    // set mapCenter to currMapCenter
-    this.currMapCenter = this.mapCenter
 
     // set resultTableCols
     this.resultsTableCols = [
@@ -188,7 +184,6 @@ export default {
     }
   },
   updated: function () {
-    this.mapCenter = this.currMapCenter[0] + this.currMapCenter[1] === this.mapCenterGetter[0] + this.mapCenterGetter[1] ? this.currMapCenter : this.mapCenterGetter
     this.searchOption.city = this.city
 
     // according to results table height to change map height
@@ -230,7 +225,6 @@ export default {
             content: '',
             visible: false
           }
-          this.mapCenter = [0, 0]
         }
 
         if (this.currentWindow.position[0] + this.currentWindow.position[1] === 0 && this.currentWindow.content === '') {
@@ -271,10 +265,6 @@ export default {
             click: () => {
               that.currentWindow.visible = false
               that.currentWindow = that.infoWindows[index]
-              // that.currentWindow = {
-              //   position: [e.lnglat.lng, e.lnglat.lat],
-              //   content: pois[index].name
-              // };
               that.$nextTick(() => {
                 that.currentWindow.visible = true
               })
@@ -291,8 +281,10 @@ export default {
           lat: latSum / pois.length
         }
         this.poisCont = this.markers.length
-        this.mapCenterGetter = [0, 0]
-        this.mapCenter = [center.lng, center.lat]
+        const payload = {
+          areaCenter: center
+        }
+        this.$store.dispatch('geolocation/getAreaCenter', payload)
       }
     },
     // accept the selected result
@@ -317,7 +309,6 @@ export default {
       // clear routing map and panel before planningDialog
       let routingMap = document.getElementById('container')
       if (!routingMap) {
-        // const planningDialog = document.getElementById('planningDialog')
         const dialogContent = document.getElementsByClassName('el-dialog el-dialog--center')
         if (dialogContent.length) {
           routingMap = document.createElement('div')
@@ -350,7 +341,7 @@ export default {
 
       const that = this
       const selections = this.selectedData
-      let routingCenter = []
+      const routingCenter = [0, 0]
       if (selections.length) {
         let lngSum = 0
         let latSum = 0
@@ -365,13 +356,11 @@ export default {
         }
         routingCenter.push(center.lng)
         routingCenter.push(center.lat)
-      } else {
-        routingCenter = this.mapCenter
       }
       // 基本地图加载
       const map = new AMap.Map('container', {
         resizeEnable: true,
-        center: routingCenter, // 地图中心点
+        center: [routingCenter[2], routingCenter[3]], // 地图中心点
         zoom: 10 // 地图显示的缩放级别
       })
 
@@ -389,13 +378,10 @@ export default {
         })
 
         // 以第一个点为起始点，延伸至其它各点，得到距离最近的点作为第二个点，以此递推找到经历所有点的一条路线
-        // const that = this
         const restPoints = selectionPoints.slice(0)
         restPoints.shift()
         const firstPoint = selectionPoints[0]
 
-        // eslint-disable-next-line no-unused-vars
-        // const sortedPoints = recursion.minDistance(firstPoint, restPoints, selectionPoints, [], driving)
         const payload = {
           startPoint: firstPoint,
           restPoints: restPoints,
@@ -447,25 +433,21 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
+.search {
+  margin-bottom: 15px;
+}
 .el-row {
   margin-left: 20px;
   margin-right: 20px;
   display: flex !important;
   justify-content: center;
 }
-.el-col-10 {
+.el-col-6 {
   display: flex;
   margin-left: 300px;
 }
-.el-col-2 {
-  display: flex;
-  margin-left: 25px;
-}
 .el-col-6 {
   margin-left: 15px;
-}
-#planning {
-  margin-left: -40px;
 }
 .amap-wrapper {
   width: 100%;
@@ -478,6 +460,10 @@ export default {
 }
 #searchRouting {
   height: 500px;
+}
+
+.amap-page-container {
+  margin-top: 20px;
 }
 
 #fullLoading {

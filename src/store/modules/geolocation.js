@@ -3,7 +3,7 @@ import recursion from '../../utils/recursion'
 
 // initial state
 const state = () => ({
-  geolocation: '',
+  location: [0, 0],
   distance: 0,
   routingVisible: false,
   isLoading: false
@@ -12,7 +12,7 @@ const state = () => ({
 // getters
 const getters = {
   geoLocaton: (state) => {
-    return state.geolocation
+    return state.location
   },
   isRouting: state => {
     return state.routingVisible
@@ -27,6 +27,9 @@ const actions = {
       (geocode) => commit('setGeolocation', { geolocation: geocode, router: router, topath: topath }),
       () => commit('setGeolocation', { geolocation: '', router: router, topath: topath })
     )
+  },
+  getAreaCenter ({ commit }, { areaCenter }) {
+    commit('setAreaCenter', { geolocation: areaCenter })
   },
   getDistance ({ commit }, { startPoint, endPoint }) {
     geolocation.getDistance(
@@ -63,10 +66,13 @@ const actions = {
 // mutations
 const mutations = {
   setGeolocation (state, { geolocation, router, topath }) {
-    state.geolocation = geolocation
+    state.location = geolocation && [parseFloat(geolocation.substring(0, geolocation.indexOf(','))), parseFloat(geolocation.substring(geolocation.indexOf(',') + 1))]
     if (geolocation && router) {
       router.push(topath + geolocation)
     }
+  },
+  setAreaCenter (state, { geolocation }) {
+    state.location = [geolocation.lng, geolocation.lat]
   },
   setDistance (state, { distance }) {
     state.distance = distance
