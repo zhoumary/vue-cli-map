@@ -51,17 +51,9 @@
             :selectedData="getSelectedPoints" />
         </el-col>
     </el-row>
-    <!-- <FullScreenDialog v-show="showDialog" title="Driving Routing" dialogKey="planningDialog" /> -->
-    <!-- <FullLoading :isLoading="isLoading" /> -->
-    <div id="fullLoading" v-show="isLoading">Loading...</div>
-    <el-dialog
-      v-show="routingVisible"
-      id="planningDialog"
-      title="Driving Routing"
-      width="95%"
-      @close="closeDialog"
-      center>
-    </el-dialog>
+
+    <FullLoading v-show="isLoading" />
+    <FullScreenDialog v-show="routingVisible" title="Driving Routing" dialogKey="planningDialog" @closedialog="closeDialog" />
   </div>
 </template>
 
@@ -71,16 +63,15 @@
 import Vue from 'vue'
 import { mapState, mapGetters } from 'vuex'
 import MultipleSelectionTable from './table/multiSelectTable'
-// import FullScreenDialog from './dialog/FullScreenDialog'
-// import FullLoading from './loading/FullLoading'
-// import recursion from '../utils/recursion'
+import FullScreenDialog from './dialog/FullScreenDialog'
+import FullLoading from './loading/FullLoading'
 // const amapManager = new VueAMap.AMapManager()
 export default {
   name: 'Search',
   components: {
-    MultipleSelectionTable
-    // FullLoading
-    // FullScreenDialog
+    MultipleSelectionTable,
+    FullLoading,
+    FullScreenDialog
   },
   props: {
     msg: String,
@@ -315,11 +306,11 @@ export default {
     },
     plan: function () {
       // show loading
-      const loadingDOM = document.getElementById('fullLoading')
-      if (loadingDOM) {
-        loadingDOM.style.height = (window.innerHeight).toString() + 'px'
-        loadingDOM.style.marginTop = (-window.innerHeight).toString() + 'px'
-        loadingDOM.style.lineHeight = (window.outerHeight).toString() + 'px'
+      const loadingDOM = document.getElementsByClassName('fullLoading')
+      if (loadingDOM && loadingDOM.length) {
+        loadingDOM[0].style.height = (window.innerHeight).toString() + 'px'
+        loadingDOM[0].style.marginTop = (-window.innerHeight).toString() + 'px'
+        loadingDOM[0].style.lineHeight = (window.outerHeight).toString() + 'px'
       }
       this.$store.dispatch('geolocation/openLoading')
 
@@ -339,7 +330,7 @@ export default {
           panelDiv.setAttribute('id', 'panel')
           routingMap.appendChild(panelDiv)
 
-          panelDiv.setAttribute('style', 'position: relative; float: right; background-color: white; right: 10px; width: 280px; z-index: 1; max-height: 90%; overflow-y: auto;')
+          panelDiv.setAttribute('style', 'position: relative; float: right; background-color: white; right: 10px; width: 280px; z-index: 1; max-height: 66%; overflow-y: auto;')
 
           const panelDivAmapCall = panelDiv.getElementsByClassName('amap-call')
           panelDivAmapCall.forEach(amapCall => {
@@ -416,10 +407,11 @@ export default {
         this.$store.dispatch('geolocation/getDrivingRouting', payload)
       } else {
         // show loading
-        const loadingDOM = document.getElementById('fullLoading')
-        if (loadingDOM) {
-          loadingDOM.style.height = (window.innerHeight).toString() + 'px'
-          loadingDOM.style.marginTop = (-window.innerHeight).toString() + 'px'
+        const loadingDOM = document.getElementsByClassName('fullLoading')
+        if (loadingDOM && loadingDOM.length) {
+          loadingDOM[0].style.height = (window.innerHeight).toString() + 'px'
+          loadingDOM[0].style.marginTop = (-window.innerHeight).toString() + 'px'
+          loadingDOM[0].style.lineHeight = (window.outerHeight).toString() + 'px'
         }
         this.$store.dispatch('geolocation/openLoading')
 
@@ -520,7 +512,7 @@ export default {
   float: right;
   position: relative;
   background-color: white;
-  max-height: 90%;
+  max-height: 66%;
   overflow-y: auto;
   right: 10px;
   width: 280px;
