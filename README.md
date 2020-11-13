@@ -24,7 +24,7 @@ npm run lint
 See [Configuration Reference](https://cli.vuejs.org/config/).
 
 
-## Vue && Vue Router && Vue AMap
+## Vue && Vue Router && Vuex && Vue AMap
 ```
 1. use vue-router to create navigation
 2. use vue-amap to create map and search places
