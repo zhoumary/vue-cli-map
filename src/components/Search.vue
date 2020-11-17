@@ -2,11 +2,12 @@
   <div>
     <el-row class="search">
       <el-col :span="6">
-        <el-input
+        <!-- <el-input
           placeholder="Please input start place"
           v-model="startPlace"
           clearable>
-        </el-input>
+        </el-input> -->
+        <el-amap-search-box class="search-start-box" ref="startPlaceSearch" :search-option="startPlaceOption" :on-search-result="onStartPlaceResult"></el-amap-search-box>
       </el-col>
     </el-row>
     <el-row class="search">
@@ -103,6 +104,7 @@ export default {
   data: function () {
     return {
       startPlace: '',
+      startPoint: null,
       city: this.$route.params.city || '',
       searchText: '',
       geolocation: this.$route.params.location,
@@ -125,6 +127,10 @@ export default {
       textsEvents: {},
       searchOption: {
         city: this.$route.params.city,
+        citylimit: true
+      },
+      startPlaceOption: {
+        city: this.startPlace,
         citylimit: true
       },
       placesOrder: [],
@@ -287,6 +293,18 @@ export default {
         this.$store.dispatch('geolocation/getAreaCenter', payload)
       }
     },
+    onStartPlaceResult: function (pois) {
+      if (pois.length > 0) {
+        // set the first location from pois to startPlace's location
+        const firstPoi = pois[0]
+        const lat = firstPoi.lat
+        const lng = firstPoi.lng
+        this.startPoint = [lng, lat]
+      } else {
+        // set the startPlace's location is null
+        this.startPoint = null
+      }
+    },
     // accept the selected result
     getSelectedPoints: function (selected) {
       this.selectedData = selected
@@ -370,53 +388,106 @@ export default {
         panel: 'panel'
       })
 
-      // 根据筛选出来的地点进行出行地点排序，并且已第一个地点为起始点和终点
-      if (selections.length > 2) {
-        // 提取所有地点的位置信息， 并提取出第一个点
-        const selectionPoints = selections.map((selection, index) => {
-          return selection.point
-        })
+      if (!this.$refs.startPlaceSearch._data.keyword) {
+        this.startPoint = null
+      }
 
-        // 以第一个点为起始点，延伸至其它各点，得到距离最近的点作为第二个点，以此递推找到经历所有点的一条路线
-        const restPoints = selectionPoints.slice(0)
-        restPoints.shift()
-        const firstPoint = selectionPoints[0]
+      // 如若没有填写出发地，根据筛选出来的地点进行出行地点排序，并且已第一个地点为起始点和终点
+      if (this.startPoint) {
+        if (selections.length > 1) {
+          // 提取所有地点的位置信息
+          const selectionPoints = selections.map((selection, index) => {
+            return selection.point
+          })
 
-        const payload = {
-          startPoint: firstPoint,
-          restPoints: restPoints,
-          selectedPoints: selectionPoints,
-          sortedPoints: [],
-          driving: driving
-        }
-        // show dialog
-        this.$store.dispatch('geolocation/getDrivingRouting', payload)
-      } else {
-        // show loading
-        const loadingDOM = document.getElementsByClassName('fullLoading')
-        if (loadingDOM && loadingDOM.length) {
-          loadingDOM[0].style.height = (window.innerHeight).toString() + 'px'
-          loadingDOM[0].style.marginTop = (-window.innerHeight).toString() + 'px'
-          loadingDOM[0].style.lineHeight = (window.outerHeight).toString() + 'px'
-        }
-        this.$store.dispatch('geolocation/openLoading')
+          const restPoints = selectionPoints.slice(0)
 
-        // 根据起终点经纬度规划驾车导航路线，仅针对只有两个地方的情况
-        driving.search(new AMap.LngLat(that.selectedData[0].point[0], that.selectedData[0].point[1]), new AMap.LngLat(that.selectedData[1].point[0], that.selectedData[1].point[1]), function (status, result) {
-          // result 即是对应的驾车导航信息，相关数据结构文档请参考  https://lbs.amap.com/api/javascript-api/reference/route-search#m_DrivingResult
-          if (status === 'complete') {
-            // show dialog
-            this.$store.dispatch('geolocation/closeLoading')
-            that.$store.dispatch('geolocation/openDrivingRouting')
-            const routingDOM = document.getElementById('container')
-            const searchMap = document.getElementById('searchMap')
-            routingDOM.style.height = searchMap.offsetHeight.toString() + 'px'
-          } else {
-            alert('获取驾车数据失败：' + result)
-            // close dialog
-            that.$store.dispatch('geolocation/closeDrivingRouting')
+          const payload = {
+            startPoint: this.startPoint,
+            defaultStartPoint: this.startPoint,
+            restPoints: restPoints,
+            selectedPoints: selectionPoints,
+            sortedPoints: [],
+            driving: driving
           }
-        })
+          // show dialog
+          this.$store.dispatch('geolocation/getDrivingRouting', payload)
+        } else {
+          // show loading
+          const loadingDOM = document.getElementsByClassName('fullLoading')
+          if (loadingDOM && loadingDOM.length) {
+            loadingDOM[0].style.height = (window.innerHeight).toString() + 'px'
+            loadingDOM[0].style.marginTop = (-window.innerHeight).toString() + 'px'
+            loadingDOM[0].style.lineHeight = (window.outerHeight).toString() + 'px'
+          }
+          this.$store.dispatch('geolocation/openLoading')
+
+          // 根据起终点经纬度规划驾车导航路线，仅针对只有两个地方的情况
+          driving.search(new AMap.LngLat(that.startPoint[0], that.startPoint[1]), new AMap.LngLat(that.selectedData[0].point[0], that.selectedData[0].point[1]), function (status, result) {
+            // result 即是对应的驾车导航信息，相关数据结构文档请参考  https://lbs.amap.com/api/javascript-api/reference/route-search#m_DrivingResult
+            if (status === 'complete') {
+              // show dialog
+              that.$store.dispatch('geolocation/closeLoading')
+              that.$store.dispatch('geolocation/openDrivingRouting')
+              const routingDOM = document.getElementById('container')
+              const searchMap = document.getElementById('searchMap')
+              routingDOM.style.height = searchMap.offsetHeight.toString() + 'px'
+            } else {
+              alert('获取驾车数据失败：' + result)
+              // close dialog
+              that.$store.dispatch('geolocation/closeDrivingRouting')
+            }
+          })
+        }
+      } else {
+        if (selections.length > 2) {
+          // 提取所有地点的位置信息，并提取出第一个点
+          const selectionPoints = selections.map((selection, index) => {
+            return selection.point
+          })
+
+          // 以第一个点为起始点，延伸至其它各点，得到距离最近的点作为第二个点，以此递推找到经历所有点的一条路线
+          const restPoints = selectionPoints.slice(0)
+          restPoints.shift()
+          const firstPoint = selectionPoints[0]
+
+          const payload = {
+            startPoint: firstPoint,
+            defaultStartPoint: null,
+            restPoints: restPoints,
+            selectedPoints: selectionPoints,
+            sortedPoints: [],
+            driving: driving
+          }
+          // show dialog
+          this.$store.dispatch('geolocation/getDrivingRouting', payload)
+        } else {
+          // show loading
+          const loadingDOM = document.getElementsByClassName('fullLoading')
+          if (loadingDOM && loadingDOM.length) {
+            loadingDOM[0].style.height = (window.innerHeight).toString() + 'px'
+            loadingDOM[0].style.marginTop = (-window.innerHeight).toString() + 'px'
+            loadingDOM[0].style.lineHeight = (window.outerHeight).toString() + 'px'
+          }
+          this.$store.dispatch('geolocation/openLoading')
+
+          // 根据起终点经纬度规划驾车导航路线，仅针对只有两个地方的情况
+          driving.search(new AMap.LngLat(that.selectedData[0].point[0], that.selectedData[0].point[1]), new AMap.LngLat(that.selectedData[1].point[0], that.selectedData[1].point[1]), function (status, result) {
+            // result 即是对应的驾车导航信息，相关数据结构文档请参考  https://lbs.amap.com/api/javascript-api/reference/route-search#m_DrivingResult
+            if (status === 'complete') {
+              // show dialog
+              that.$store.dispatch('geolocation/closeLoading')
+              that.$store.dispatch('geolocation/openDrivingRouting')
+              const routingDOM = document.getElementById('container')
+              const searchMap = document.getElementById('searchMap')
+              routingDOM.style.height = searchMap.offsetHeight.toString() + 'px'
+            } else {
+              alert('获取驾车数据失败：' + result)
+              // close dialog
+              that.$store.dispatch('geolocation/closeDrivingRouting')
+            }
+          })
+        }
       }
     },
     closeDialog: function (params) {
@@ -445,6 +516,11 @@ export default {
 .el-col-6 {
   display: flex;
   margin-left: 300px;
+}
+.el-vue-search-box-container.search-start-box {
+  width: 100% !important;
+  height: 40px !important;
+  box-shadow: 0 0px 1.2px #303133 !important;
 }
 .el-col-6 {
   margin-left: 15px;

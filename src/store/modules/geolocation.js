@@ -45,9 +45,10 @@ const actions = {
   closeLoading ({ commit }) {
     commit('setLoading', { loadingVisible: false })
   },
-  getDrivingRouting ({ commit }, { startPoint, restPoints, selectedPoints, sortedPoints, driving }) {
+  getDrivingRouting ({ commit }, { startPoint, defaultStartPoint, restPoints, selectedPoints, sortedPoints, driving }) {
     recursion.minDistance(
       startPoint,
+      defaultStartPoint,
       restPoints,
       selectedPoints,
       sortedPoints,
@@ -78,9 +79,7 @@ const mutations = {
     state.distance = distance
   },
   setRoutingVisible (state, { dialogVisible }) {
-    if (dialogVisible) {
-      state.isLoading = false
-    }
+    state.isLoading = false
     state.routingVisible = dialogVisible
   },
   setLoading (state, { loadingVisible }) {

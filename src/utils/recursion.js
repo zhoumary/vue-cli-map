@@ -6,7 +6,7 @@ import multiDriving from './multiDriving'
 Vue.use(VueAxios, axios)
 
 export default {
-  minDistance (startPoint, restPoints, points, sortingPoints, driving, cb) {
+  minDistance (startPoint, defaultStartPoint, restPoints, points, sortingPoints, driving, cb) {
     if (restPoints.length < 2) {
       return []
     }
@@ -37,11 +37,11 @@ export default {
           if (restPoints.length && restPoints.length === 1) {
             sortingPoints.push(restPoints[0])
             restPoints.length = 0
-            multiDriving.drivingRoute(points[0], sortingPoints, driving, cb)
+            defaultStartPoint ? multiDriving.drivingRoute(defaultStartPoint, sortingPoints, driving, cb) : multiDriving.drivingRoute(points[0], sortingPoints, driving, cb)
             return sortingPoints
           }
           if (restPoints.length && restPoints.length > 1) {
-            this.minDistance(sortingPoints[sortingPoints.length - 1], restPoints, points, sortingPoints, driving, cb)
+            this.minDistance(sortingPoints[sortingPoints.length - 1], defaultStartPoint, restPoints, points, sortingPoints, driving, cb)
           }
         })
         .catch(error => {
