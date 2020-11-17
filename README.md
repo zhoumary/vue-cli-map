@@ -36,3 +36,8 @@ See [Configuration Reference](https://cli.vuejs.org/config/).
 8. make full screen loading and full screen dialog component
 9. add start place by el-amap-search-box as the routing first point
 ```
+## To do list
+```
+1. add destination point
+2. get restraunts info(name, stars) nearby view points
+```
