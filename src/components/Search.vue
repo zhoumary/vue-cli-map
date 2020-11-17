@@ -2,11 +2,6 @@
   <div>
     <el-row class="search">
       <el-col :span="6">
-        <!-- <el-input
-          placeholder="Please input start place"
-          v-model="startPlace"
-          clearable>
-        </el-input> -->
         <el-amap-search-box class="search-start-box" ref="startPlaceSearch" :search-option="startPlaceOption" :on-search-result="onStartPlaceResult"></el-amap-search-box>
       </el-col>
     </el-row>

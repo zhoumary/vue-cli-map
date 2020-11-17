@@ -34,4 +34,5 @@ See [Configuration Reference](https://cli.vuejs.org/config/).
 6. add loading screen before getting driving routes
 7. use el-dialog to show the driving routing
 8. make full screen loading and full screen dialog component
+9. add start place by el-amap-search-box as the routing first point
 ```
