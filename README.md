@@ -41,3 +41,11 @@ See [Configuration Reference](https://cli.vuejs.org/config/).
 1. add destination point
 2. get restraunts info(name, stars) nearby view points
 ```
+
+## Optimization
+```
+1. hide map search box, directly show all view points table and show more by toggling
+2. select view points and addtional places(food or hotel) nearby selected points, and organize them to the left list when click Planning button
+3. change color of selected points
+4. show all sorted points in the routing dialog
+```
