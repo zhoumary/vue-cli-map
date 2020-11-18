@@ -517,6 +517,11 @@ export default {
   height: 40px !important;
   box-shadow: 0 0px 1.2px #303133 !important;
 }
+.el-vue-search-box-container.search-start-box.search-box-wrapper.search-btn {
+  font-size: 15px !important;
+  font-weight: 400 !important;
+  font-family: auto !important;
+}
 .el-col-6 {
   margin-left: 15px;
 }
